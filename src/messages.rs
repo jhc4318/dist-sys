@@ -22,3 +22,30 @@ enum MessageBody {
         echo: String,
     },
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_echo_message() {
+        let msg = "{
+            \"src\": \"c1\",
+            \"dest\": \"n1\",
+            \"body\": {
+                \"type\": \"echo\",
+                \"msg_id\": 1,
+                \"echo\": \"hi\"
+            }
+        }";
+        let msg = serde_json::from_str::<Message>(msg).unwrap();
+
+        assert_eq!(msg.src, "c1");
+        assert_eq!(msg.dest, "n1");
+        let MessageBody::Echo { msg_id, echo } = msg.body else {
+            panic!("did not parse as Echo message");
+        };
+        assert_eq!(msg_id, 1);
+        assert_eq!(echo, "hi");
+    }
+}
