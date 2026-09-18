@@ -48,4 +48,18 @@ mod tests {
         assert_eq!(msg_id, 1);
         assert_eq!(echo, "hi");
     }
+
+    #[test]
+    #[should_panic]
+    fn test_unknown_message() {
+        let msg = "{
+            \"src\": \"c1\",
+            \"dest\": \"n1\",
+            \"body\": {
+                \"type\": \"unknown\",
+            }
+        }";
+
+        serde_json::from_str::<Message>(msg).unwrap();
+    }
 }
