@@ -9,18 +9,46 @@ pub struct Message {
     body: MessageBody,
 }
 
+impl Message {
+    pub fn new(src: &str, dest: &str, body: MessageBody) -> Self {
+        Message {
+            src: src.to_string(),
+            dest: dest.to_string(),
+            body,
+        }
+    }
+
+    pub fn get_src(&self) -> &str {
+        &self.src
+    }
+
+    pub fn get_dest(&self) -> &str {
+        &self.dest
+    }
+
+    pub fn get_body(&self) -> &MessageBody {
+        &self.body
+    }
+}
+
 #[derive(Serialize, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-enum MessageBody {
-    Echo {
-        msg_id: MsgId,
-        echo: String,
-    },
-    EchoOk {
-        msg_id: MsgId,
-        in_reply_to: MsgId,
-        echo: String,
-    },
+pub enum MessageBody {
+    Echo(Echo),
+    EchoOk(EchoOk),
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Echo {
+    pub msg_id: MsgId,
+    pub echo: String,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct EchoOk {
+    pub msg_id: MsgId,
+    pub in_reply_to: MsgId,
+    pub echo: String,
 }
 
 #[cfg(test)]
@@ -40,12 +68,12 @@ mod tests {
         }";
         let msg = serde_json::from_str::<Message>(msg).unwrap();
 
-        assert_eq!(msg.src, "c1");
-        assert_eq!(msg.dest, "n1");
-        let MessageBody::Echo { msg_id, echo } = msg.body else {
+        assert_eq!(msg.get_src(), "c1");
+        assert_eq!(msg.get_dest(), "n1");
+        let MessageBody::Echo(Echo { msg_id, echo }) = msg.get_body() else {
             panic!("did not parse as Echo message");
         };
-        assert_eq!(msg_id, 1);
+        assert_eq!(*msg_id, 1);
         assert_eq!(echo, "hi");
     }
 
