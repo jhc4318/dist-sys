@@ -1,24 +1,9 @@
-use std::io::{self, BufRead};
+use std::io;
 
 mod messages;
+use serde_json::Deserializer;
+
 use crate::messages::{Echo, EchoOk, Message, MessageBody};
-
-fn handle_line(line: &str) {
-    let Ok(msg) = serde_json::from_str::<Message>(line) else {
-        eprintln!("could not parse {line} as a valid message");
-        return;
-    };
-    eprintln!("received {msg:?}");
-
-    let msg_body = msg.get_body();
-    match msg_body {
-        MessageBody::Echo(Echo {
-            msg_id: _msg_id,
-            echo,
-        }) => handle_echo(&msg, echo),
-        _ => eprintln!("no response for {:?}", msg_body),
-    }
-}
 
 fn handle_echo(msg: &Message, echo: &str) {
     let response = Message::new(
@@ -34,12 +19,28 @@ fn handle_echo(msg: &Message, echo: &str) {
     println!("{:?}", serde_json::to_string(&response).unwrap());
 }
 
+fn handle_msg(msg: &Message) {
+    let msg_body = msg.get_body();
+    match msg_body {
+        MessageBody::Echo(Echo {
+            msg_id: _msg_id,
+            echo,
+        }) => handle_echo(msg, echo),
+        _ => eprintln!("no response for {:?}", msg_body),
+    }
+}
+
 fn run() -> Result<(), io::Error> {
     eprintln!("Starting loop...");
     let stdin = io::stdin();
 
-    for line in stdin.lock().lines() {
-        handle_line(&line?);
+    let reader = Deserializer::from_reader(stdin.lock());
+
+    for result in reader.into_iter::<Message>() {
+        match result {
+            Ok(msg) => handle_msg(&msg),
+            Err(err) => eprintln!("could not parse response: {}", err),
+        }
     }
 
     Ok(())
