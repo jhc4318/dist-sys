@@ -159,13 +159,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn rejects_unknown_message() {
-        let msg = "{
-            \"src\": \"c1\",
-            \"dest\": \"n1\",
-            \"body\": {
-                \"type\": \"unknown\",
+        let msg = r#"{
+            "src": "c1",
+            "dest": "n1",
+            "body": {
+                "type": "unknown",
             }
-        }";
+        }"#;
 
         serde_json::from_str::<Message>(msg).unwrap();
     }
