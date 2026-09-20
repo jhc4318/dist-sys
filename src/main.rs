@@ -3,17 +3,17 @@ use std::io;
 mod messages;
 use serde_json::Deserializer;
 
-use crate::messages::{Echo, EchoOk, Init, InitOk, Message, MessageBody};
+use crate::messages::{Message, MessageBody};
 
 fn handle_echo(msg: &Message, echo: &str) {
     let response = Message::new(
         msg.get_dest(),
         msg.get_src(),
-        MessageBody::EchoOk(EchoOk {
+        MessageBody::EchoOk {
             msg_id: 1,
             in_reply_to: 1,
             echo: echo.to_string(),
-        }),
+        },
     );
 
     println!("{}", serde_json::to_string(&response).unwrap());
@@ -23,7 +23,7 @@ fn handle_init(msg: &Message) {
     let response = Message::new(
         msg.get_dest(),
         msg.get_src(),
-        MessageBody::InitOk(InitOk { in_reply_to: 1 }),
+        MessageBody::InitOk { in_reply_to: 1 },
     );
 
     println!("{}", serde_json::to_string(&response).unwrap());
@@ -32,15 +32,15 @@ fn handle_init(msg: &Message) {
 fn handle_msg(msg: &Message) {
     let msg_body = msg.get_body();
     match msg_body {
-        MessageBody::Echo(Echo {
+        MessageBody::Echo {
             msg_id: _msg_id,
             echo,
-        }) => handle_echo(msg, echo),
-        MessageBody::Init(Init {
+        } => handle_echo(msg, echo),
+        MessageBody::Init {
             msg_id: _msg_id,
             node_id: _node_id,
             node_ids: _node_ids,
-        }) => handle_init(msg),
+        } => handle_init(msg),
         _ => eprintln!("no response for {:?}", msg_body),
     }
 }

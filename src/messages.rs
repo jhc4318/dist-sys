@@ -32,37 +32,25 @@ impl Message {
 }
 
 #[derive(Serialize, Debug, Deserialize)]
-pub struct Echo {
-    pub msg_id: MsgId,
-    pub echo: String,
-}
-
-#[derive(Serialize, Debug, Deserialize)]
-pub struct EchoOk {
-    pub msg_id: MsgId,
-    pub in_reply_to: MsgId,
-    pub echo: String,
-}
-
-#[derive(Serialize, Debug, Deserialize)]
-pub struct Init {
-    pub msg_id: MsgId,
-    pub node_id: String,
-    pub node_ids: Vec<String>,
-}
-
-#[derive(Serialize, Debug, Deserialize)]
-pub struct InitOk {
-    pub in_reply_to: MsgId,
-}
-
-#[derive(Serialize, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum MessageBody {
-    Echo(Echo),
-    EchoOk(EchoOk),
-    Init(Init),
-    InitOk(InitOk),
+    Echo {
+        msg_id: MsgId,
+        echo: String,
+    },
+    EchoOk {
+        msg_id: MsgId,
+        in_reply_to: MsgId,
+        echo: String,
+    },
+    Init {
+        msg_id: MsgId,
+        node_id: String,
+        node_ids: Vec<String>,
+    },
+    InitOk {
+        in_reply_to: MsgId,
+    },
 }
 
 #[cfg(test)]
@@ -87,11 +75,11 @@ mod tests {
 
         assert_eq!(msg.get_src(), "c1");
         assert_eq!(msg.get_dest(), "n1");
-        let MessageBody::Init(Init {
+        let MessageBody::Init {
             msg_id,
             node_id,
             node_ids,
-        }) = msg.get_body()
+        } = msg.get_body()
         else {
             panic!("did not parse as Init message");
         };
@@ -117,7 +105,7 @@ mod tests {
 
         assert_eq!(msg.get_src(), "c1");
         assert_eq!(msg.get_dest(), "n1");
-        let MessageBody::Echo(Echo { msg_id, echo }) = msg.get_body() else {
+        let MessageBody::Echo { msg_id, echo } = msg.get_body() else {
             panic!("did not parse as Echo message");
         };
         assert_eq!(*msg_id, 1);
