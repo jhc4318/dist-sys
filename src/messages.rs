@@ -70,17 +70,50 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_echo_message() {
-        let msg = "{
-            \"src\": \"c1\",
-            \"dest\": \"n1\",
-            \"body\": {
-                \"type\": \"echo\",
-                \"msg_id\": 1,
-                \"echo\": \"hi\"
+    fn parses_init_message() {
+        let json = r#"
+            {
+                "src": "c1",
+                "dest": "n1",
+                "body": {
+                    "type": "init",
+                    "msg_id": 1,
+                    "node_id": "n1",
+                    "node_ids": ["n1", "n2"]
+                }
             }
-        }";
-        let msg = serde_json::from_str::<Message>(msg).unwrap();
+        "#;
+        let msg = serde_json::from_str::<Message>(json).unwrap();
+
+        assert_eq!(msg.get_src(), "c1");
+        assert_eq!(msg.get_dest(), "n1");
+        let MessageBody::Init(Init {
+            msg_id,
+            node_id,
+            node_ids,
+        }) = msg.get_body()
+        else {
+            panic!("did not parse as Init message");
+        };
+        assert_eq!(*msg_id, 1);
+        assert_eq!(node_id, "n1");
+        assert_eq!(*node_ids, vec!["n1", "n2"]);
+    }
+
+    #[test]
+    fn parses_echo_message() {
+        let json = r#"
+            {
+                "src": "c1",
+                "dest": "n1",
+                "body": {
+                    "type": "echo",
+                    "msg_id": 1,
+                    "echo": "hi"
+                }
+            }
+        "#;
+        let msg = serde_json::from_str::<Message>(json).unwrap();
 
         assert_eq!(msg.get_src(), "c1");
         assert_eq!(msg.get_dest(), "n1");
@@ -93,7 +126,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_unknown_message() {
+    fn rejects_unknown_message() {
         let msg = "{
             \"src\": \"c1\",
             \"dest\": \"n1\",
