@@ -32,13 +32,6 @@ impl Message {
 }
 
 #[derive(Serialize, Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum MessageBody {
-    Echo(Echo),
-    EchoOk(EchoOk),
-}
-
-#[derive(Serialize, Debug, Deserialize)]
 pub struct Echo {
     pub msg_id: MsgId,
     pub echo: String,
@@ -49,6 +42,27 @@ pub struct EchoOk {
     pub msg_id: MsgId,
     pub in_reply_to: MsgId,
     pub echo: String,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Init {
+    pub msg_id: MsgId,
+    pub node_id: String,
+    pub node_ids: Vec<String>,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct InitOk {
+    pub in_reply_to: MsgId,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum MessageBody {
+    Echo(Echo),
+    EchoOk(EchoOk),
+    Init(Init),
+    InitOk(InitOk),
 }
 
 #[cfg(test)]

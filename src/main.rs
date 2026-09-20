@@ -3,7 +3,7 @@ use std::io;
 mod messages;
 use serde_json::Deserializer;
 
-use crate::messages::{Echo, EchoOk, Message, MessageBody};
+use crate::messages::{Echo, EchoOk, Init, InitOk, Message, MessageBody};
 
 fn handle_echo(msg: &Message, echo: &str) {
     let response = Message::new(
@@ -16,7 +16,17 @@ fn handle_echo(msg: &Message, echo: &str) {
         }),
     );
 
-    println!("{:?}", serde_json::to_string(&response).unwrap());
+    println!("{}", serde_json::to_string(&response).unwrap());
+}
+
+fn handle_init(msg: &Message) {
+    let response = Message::new(
+        msg.get_dest(),
+        msg.get_src(),
+        MessageBody::InitOk(InitOk { in_reply_to: 1 }),
+    );
+
+    println!("{}", serde_json::to_string(&response).unwrap());
 }
 
 fn handle_msg(msg: &Message) {
@@ -26,6 +36,11 @@ fn handle_msg(msg: &Message) {
             msg_id: _msg_id,
             echo,
         }) => handle_echo(msg, echo),
+        MessageBody::Init(Init {
+            msg_id: _msg_id,
+            node_id: _node_id,
+            node_ids: _node_ids,
+        }) => handle_init(msg),
         _ => eprintln!("no response for {:?}", msg_body),
     }
 }
