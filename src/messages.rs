@@ -58,7 +58,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parses_init_message() {
+    fn deserializes_init_msg() {
         let json = r#"
             {
                 "src": "c1",
@@ -89,7 +89,24 @@ mod tests {
     }
 
     #[test]
-    fn parses_echo_message() {
+    fn serializes_init_ok_msg() {
+        let msg = Message::new("n1", "c1", MessageBody::InitOk { in_reply_to: 1 });
+
+        let actual = serde_json::to_value(msg).unwrap();
+        let expected = serde_json::json!({
+            "src": "n1",
+            "dest": "c1",
+            "body": {
+                "type": "init_ok",
+                "in_reply_to": 1
+            }
+        });
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn deserializes_echo_msg() {
         let json = r#"
             {
                 "src": "c1",
@@ -110,6 +127,33 @@ mod tests {
         };
         assert_eq!(*msg_id, 1);
         assert_eq!(echo, "hi");
+    }
+
+    #[test]
+    fn serializes_echo_ok_msg() {
+        let msg = Message::new(
+            "n1",
+            "c1",
+            MessageBody::EchoOk {
+                msg_id: 1,
+                in_reply_to: 1,
+                echo: "hello".to_string(),
+            },
+        );
+
+        let actual = serde_json::to_value(msg).unwrap();
+        let expected = serde_json::json!({
+            "src": "n1",
+            "dest": "c1",
+            "body": {
+                "type": "echo_ok",
+                "msg_id": 1,
+                "in_reply_to": 1,
+                "echo": "hello"
+            }
+        });
+
+        assert_eq!(actual, expected);
     }
 
     #[test]
