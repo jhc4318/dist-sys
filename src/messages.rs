@@ -1,55 +1,66 @@
 use serde::{Deserialize, Serialize};
 
-type MsgId = u16;
+type MsgId = usize;
 
 #[derive(Serialize, Debug, Deserialize)]
 pub struct Message {
     src: String,
-    dest: String,
-    body: MessageBody,
+    #[serde(rename = "dest")]
+    dst: String,
+    body: Body,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Body {
+    msg_id: MsgId,
+    #[serde(flatten)]
+    payload: Payload,
 }
 
 impl Message {
-    pub fn new(src: &str, dest: &str, body: MessageBody) -> Self {
+    pub fn new(src: &str, dest: &str, id: MsgId, payload: Payload) -> Self {
         Message {
             src: src.to_string(),
-            dest: dest.to_string(),
-            body,
+            dst: dest.to_string(),
+            body: Body {
+                msg_id: id,
+                payload,
+            },
         }
     }
 
-    pub fn get_src(&self) -> &str {
+    pub fn src(&self) -> &str {
         &self.src
     }
 
-    pub fn get_dest(&self) -> &str {
-        &self.dest
+    pub fn dst(&self) -> &str {
+        &self.dst
     }
 
-    pub fn get_body(&self) -> &MessageBody {
-        &self.body
+    pub fn id(&self) -> MsgId {
+        self.body.msg_id
+    }
+
+    pub fn payload(&self) -> &Payload {
+        &self.body.payload
     }
 }
 
 #[derive(Serialize, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum MessageBody {
+pub enum Payload {
     Echo {
-        msg_id: MsgId,
         echo: String,
     },
     EchoOk {
-        msg_id: MsgId,
         in_reply_to: MsgId,
         echo: String,
     },
     Init {
-        msg_id: MsgId,
         node_id: String,
         node_ids: Vec<String>,
     },
     InitOk {
-        msg_id: MsgId,
         in_reply_to: MsgId,
     },
 }
@@ -74,31 +85,19 @@ mod tests {
         "#;
         let msg = serde_json::from_str::<Message>(json).unwrap();
 
-        assert_eq!(msg.get_src(), "c1");
-        assert_eq!(msg.get_dest(), "n1");
-        let MessageBody::Init {
-            msg_id,
-            node_id,
-            node_ids,
-        } = msg.get_body()
-        else {
+        assert_eq!(msg.src(), "c1");
+        assert_eq!(msg.dst(), "n1");
+        assert_eq!(msg.id(), 1);
+        let Payload::Init { node_id, node_ids } = msg.payload() else {
             panic!("did not parse as Init message");
         };
-        assert_eq!(*msg_id, 1);
         assert_eq!(node_id, "n1");
         assert_eq!(*node_ids, vec!["n1", "n2"]);
     }
 
     #[test]
     fn serializes_init_ok_msg() {
-        let msg = Message::new(
-            "n1",
-            "c1",
-            MessageBody::InitOk {
-                msg_id: 1,
-                in_reply_to: 1,
-            },
-        );
+        let msg = Message::new("n1", "c1", 2, Payload::InitOk { in_reply_to: 1 });
 
         let actual = serde_json::to_value(msg).unwrap();
         let expected = serde_json::json!({
@@ -106,6 +105,7 @@ mod tests {
             "dest": "c1",
             "body": {
                 "type": "init_ok",
+                "msg_id": 2,
                 "in_reply_to": 1
             }
         });
@@ -128,12 +128,12 @@ mod tests {
         "#;
         let msg = serde_json::from_str::<Message>(json).unwrap();
 
-        assert_eq!(msg.get_src(), "c1");
-        assert_eq!(msg.get_dest(), "n1");
-        let MessageBody::Echo { msg_id, echo } = msg.get_body() else {
+        assert_eq!(msg.src(), "c1");
+        assert_eq!(msg.dst(), "n1");
+        assert_eq!(msg.id(), 1);
+        let Payload::Echo { echo } = msg.payload() else {
             panic!("did not parse as Echo message");
         };
-        assert_eq!(*msg_id, 1);
         assert_eq!(echo, "hi");
     }
 
@@ -142,8 +142,8 @@ mod tests {
         let msg = Message::new(
             "n1",
             "c1",
-            MessageBody::EchoOk {
-                msg_id: 1,
+            2,
+            Payload::EchoOk {
                 in_reply_to: 1,
                 echo: "hello".to_string(),
             },
@@ -155,7 +155,7 @@ mod tests {
             "dest": "c1",
             "body": {
                 "type": "echo_ok",
-                "msg_id": 1,
+                "msg_id": 2,
                 "in_reply_to": 1,
                 "echo": "hello"
             }
@@ -172,6 +172,7 @@ mod tests {
             "dest": "n1",
             "body": {
                 "type": "unknown",
+                "msg_id": 1
             }
         }"#;
 
