@@ -6,26 +6,18 @@ use serde_json::Deserializer;
 use crate::messages::{Message, Payload};
 
 fn handle_echo(msg: &Message, echo: &str) {
-    let response = Message::new(
-        msg.dst(),
-        msg.src(),
-        msg.id() + 1,
-        Payload::EchoOk {
-            in_reply_to: 1,
-            echo: echo.to_string(),
-        },
-    );
+    let response = msg.reply(Payload::EchoOk {
+        in_reply_to: msg.id(),
+        echo: echo.to_string(),
+    });
 
     println!("{}", serde_json::to_string(&response).unwrap());
 }
 
 fn handle_init(msg: &Message) {
-    let response = Message::new(
-        msg.dst(),
-        msg.src(),
-        msg.id() + 1,
-        Payload::InitOk { in_reply_to: 1 },
-    );
+    let response = msg.reply(Payload::InitOk {
+        in_reply_to: msg.id(),
+    });
 
     println!("{}", serde_json::to_string(&response).unwrap());
 }

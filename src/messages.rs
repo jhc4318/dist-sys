@@ -18,17 +18,6 @@ pub struct Body {
 }
 
 impl Message {
-    pub fn new(src: &str, dest: &str, id: MsgId, payload: Payload) -> Self {
-        Message {
-            src: src.to_string(),
-            dst: dest.to_string(),
-            body: Body {
-                msg_id: id,
-                payload,
-            },
-        }
-    }
-
     pub fn src(&self) -> &str {
         &self.src
     }
@@ -43,6 +32,17 @@ impl Message {
 
     pub fn payload(&self) -> &Payload {
         &self.body.payload
+    }
+
+    pub fn reply(&self, payload: Payload) -> Self {
+        Message {
+            src: self.dst().to_string(),
+            dst: self.src().to_string(),
+            body: Body {
+                msg_id: self.id() + 1,
+                payload,
+            },
+        }
     }
 }
 
@@ -97,7 +97,14 @@ mod tests {
 
     #[test]
     fn serializes_init_ok_msg() {
-        let msg = Message::new("n1", "c1", 2, Payload::InitOk { in_reply_to: 1 });
+        let msg = {
+            let payload = Payload::InitOk { in_reply_to: 1 };
+            Message {
+                src: "n1".to_string(),
+                dst: "c1".to_string(),
+                body: Body { msg_id: 2, payload },
+            }
+        };
 
         let actual = serde_json::to_value(msg).unwrap();
         let expected = serde_json::json!({
@@ -139,15 +146,17 @@ mod tests {
 
     #[test]
     fn serializes_echo_ok_msg() {
-        let msg = Message::new(
-            "n1",
-            "c1",
-            2,
-            Payload::EchoOk {
+        let msg = {
+            let payload = Payload::EchoOk {
                 in_reply_to: 1,
                 echo: "hello".to_string(),
-            },
-        );
+            };
+            Message {
+                src: "n1".to_string(),
+                dst: "c1".to_string(),
+                body: Body { msg_id: 2, payload },
+            }
+        };
 
         let actual = serde_json::to_value(msg).unwrap();
         let expected = serde_json::json!({
@@ -177,5 +186,27 @@ mod tests {
         }"#;
 
         serde_json::from_str::<Message>(msg).unwrap();
+    }
+
+    #[test]
+    fn creates_reply() {
+        let msg = {
+            let payload = Payload::Echo {
+                echo: "hello".to_string(),
+            };
+            Message {
+                src: "a".to_string(),
+                dst: "b".to_string(),
+                body: Body { msg_id: 1, payload },
+            }
+        };
+        let reply = msg.reply(Payload::EchoOk {
+            in_reply_to: 1,
+            echo: "hello".to_string(),
+        });
+
+        assert_eq!(reply.src(), "b");
+        assert_eq!(reply.dst(), "a");
+        assert_eq!(reply.id(), 2);
     }
 }
