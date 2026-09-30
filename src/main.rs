@@ -23,7 +23,10 @@ fn handle_init(msg: &Message) {
     let response = Message::new(
         msg.get_dest(),
         msg.get_src(),
-        MessageBody::InitOk { in_reply_to: 1 },
+        MessageBody::InitOk {
+            msg_id: 1,
+            in_reply_to: 1,
+        },
     );
 
     println!("{}", serde_json::to_string(&response).unwrap());

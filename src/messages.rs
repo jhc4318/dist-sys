@@ -49,6 +49,7 @@ pub enum MessageBody {
         node_ids: Vec<String>,
     },
     InitOk {
+        msg_id: MsgId,
         in_reply_to: MsgId,
     },
 }
@@ -90,7 +91,14 @@ mod tests {
 
     #[test]
     fn serializes_init_ok_msg() {
-        let msg = Message::new("n1", "c1", MessageBody::InitOk { in_reply_to: 1 });
+        let msg = Message::new(
+            "n1",
+            "c1",
+            MessageBody::InitOk {
+                msg_id: 1,
+                in_reply_to: 1,
+            },
+        );
 
         let actual = serde_json::to_value(msg).unwrap();
         let expected = serde_json::json!({
