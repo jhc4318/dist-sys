@@ -45,7 +45,7 @@ impl Message {
         &self.dst
     }
 
-    pub fn id(&self) -> MsgId {
+    pub fn msg_id(&self) -> MsgId {
         self.body.msg_id
     }
 
@@ -58,7 +58,7 @@ impl Message {
             src: self.dst().to_string(),
             dst: self.src().to_string(),
             body: Body {
-                msg_id: self.id() + 1,
+                msg_id: self.msg_id() + 1,
                 payload,
             },
         }
@@ -87,7 +87,7 @@ mod tests {
 
         assert_eq!(msg.src(), "c1");
         assert_eq!(msg.dst(), "n1");
-        assert_eq!(msg.id(), 1);
+        assert_eq!(msg.msg_id(), 1);
         let Payload::Init { node_id, node_ids } = msg.payload() else {
             panic!("did not parse as Init message");
         };
@@ -137,7 +137,7 @@ mod tests {
 
         assert_eq!(msg.src(), "c1");
         assert_eq!(msg.dst(), "n1");
-        assert_eq!(msg.id(), 1);
+        assert_eq!(msg.msg_id(), 1);
         let Payload::Echo { echo } = msg.payload() else {
             panic!("did not parse as Echo message");
         };
@@ -207,6 +207,6 @@ mod tests {
 
         assert_eq!(reply.src(), "b");
         assert_eq!(reply.dst(), "a");
-        assert_eq!(reply.id(), 2);
+        assert_eq!(reply.msg_id(), 2);
     }
 }
