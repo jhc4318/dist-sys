@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 type MsgId = usize;
 
@@ -33,6 +34,11 @@ pub enum Payload {
     },
     InitOk {
         in_reply_to: MsgId,
+    },
+    Generate {},
+    GenerateOk {
+        in_reply_to: MsgId,
+        id: Uuid,
     },
 }
 
@@ -167,6 +173,55 @@ mod tests {
                 "msg_id": 2,
                 "in_reply_to": 1,
                 "echo": "hello"
+            }
+        });
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn deserializes_generate_msg() {
+        let json = r#"
+            {
+                "src": "c1",
+                "dest": "n1",
+                "body": {
+                    "type": "generate",
+                    "msg_id": 1
+                }
+            }
+        "#;
+        let msg = serde_json::from_str::<Message>(json).unwrap();
+
+        assert_eq!(msg.src(), "c1");
+        assert_eq!(msg.dst(), "n1");
+        assert_eq!(msg.msg_id(), 1);
+        let Payload::Generate {} = msg.payload() else {
+            panic!("did not parse as Generate message");
+        };
+    }
+
+    #[test]
+    fn serializes_generate_ok_msg() {
+        let id = Uuid::new_v4();
+        let msg = {
+            let payload = Payload::GenerateOk { in_reply_to: 1, id };
+            Message {
+                src: "n1".to_string(),
+                dst: "c1".to_string(),
+                body: Body { msg_id: 2, payload },
+            }
+        };
+
+        let actual = serde_json::to_value(msg).unwrap();
+        let expected = serde_json::json!({
+            "src": "n1",
+            "dest": "c1",
+            "body": {
+                "type": "generate_ok",
+                "msg_id": 2,
+                "in_reply_to": 1,
+                "id": &id.to_string()
             }
         });
 

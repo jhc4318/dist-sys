@@ -18,7 +18,6 @@ fn handle_init(msg: &Message) {
     let response = msg.reply(Payload::InitOk {
         in_reply_to: msg.msg_id(),
     });
-
     println!("{}", serde_json::to_string(&response).unwrap());
 }
 
