@@ -17,6 +17,25 @@ pub struct Body {
     payload: Payload,
 }
 
+#[derive(Serialize, Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum Payload {
+    Echo {
+        echo: String,
+    },
+    EchoOk {
+        in_reply_to: MsgId,
+        echo: String,
+    },
+    Init {
+        node_id: String,
+        node_ids: Vec<String>,
+    },
+    InitOk {
+        in_reply_to: MsgId,
+    },
+}
+
 impl Message {
     pub fn src(&self) -> &str {
         &self.src
@@ -44,25 +63,6 @@ impl Message {
             },
         }
     }
-}
-
-#[derive(Serialize, Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum Payload {
-    Echo {
-        echo: String,
-    },
-    EchoOk {
-        in_reply_to: MsgId,
-        echo: String,
-    },
-    Init {
-        node_id: String,
-        node_ids: Vec<String>,
-    },
-    InitOk {
-        in_reply_to: MsgId,
-    },
 }
 
 #[cfg(test)]
