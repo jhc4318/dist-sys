@@ -21,6 +21,14 @@ fn handle_init(msg: &Message) {
     println!("{}", serde_json::to_string(&response).unwrap());
 }
 
+fn handle_generate(msg: &Message) {
+    let response = msg.reply(Payload::GenerateOk {
+        in_reply_to: msg.msg_id(),
+        id: uuid::Uuid::new_v4(),
+    });
+    println!("{}", serde_json::to_string(&response).unwrap());
+}
+
 fn handle_msg(msg: &Message) {
     let msg_body = msg.payload();
     match msg_body {
@@ -29,6 +37,7 @@ fn handle_msg(msg: &Message) {
             node_id: _node_id,
             node_ids: _node_ids,
         } => handle_init(msg),
+        Payload::Generate {} => handle_generate(msg),
         _ => eprintln!("no response for {:?}", msg_body),
     }
 }
